@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Vermögen"/>
+<meta name="theme-color" content="#0d1117"/>
+<title>Vermögens-Dashboard</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0d1117;--panel:#161b27;--panel2:#1a2030;--panel3:#1e2535;
+  --border:#232c3d;--borderl:#2d3a52;
+  --green:#22c55e;--greend:#14532d;--red:#ef4444;--redd:#7f1d1d;
+  --amber:#f59e0b;--blue:#3b82f6;--bluel:#60a5fa;
+  --teal:#14b8a6;--purple:#a855f7;--gold:#d4a843;--crypto:#f7931a;
+  --text:#e2e8f0;--textm:#8899aa;--textd:#4a5568;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+html,body{
+  min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;
+  font-size:14px;line-height:1.4;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:#2a3040;border-radius:2px;}
+
+/* ── Typography ───────────────────────────────────── */
+.mono{font-family:‘SF Mono’,‘Courier New’,monospace;}
+.label{font-family:‘SF Mono’,‘Courier New’,monospace;font-size:9px;color:var(–textd);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+
+/* ── Nav ──────────────────────────────────────────── */
+#nav{
+position:sticky;top:0;z-index:100;
+background:var(–panel);border-bottom:1px solid var(–border);
+padding:0 20px;padding-top:var(–safe-top);
+display:flex;align-items:center;gap:2px;
+height:calc(54px + var(–safe-top));
+overflow-x:auto;-webkit-overflow-scrolling:touch;
+scrollbar-width:none;
+}
+#nav::-webkit-scrollbar{display:none;}
+.nav-logo{display:flex;align-items:center;gap:8px;margin-right:12px;flex-shrink:0;}
+.nav-icon{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(–green),var(–teal));display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-title{font-family:‘SF Mono’,‘Courier New’,monospace;font-size:12px;font-weight:500;white-space:nowrap;}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:4px 12px;font-size:13px;font-weight:500;color:var(–textm);white-space:nowrap;flex-shrink:0;transition:all .15s;min-height:44px;cursor:pointer;}
+.tab.on{color:var(–text);border-bottom-color:var(–green);}
+.nav-time{margin-left:auto;font-family:‘SF Mono’,‘Courier New’,monospace;font-size:10px;color:var(–textd);flex-shrink:0;padding-left:12px;}
+
+/* ── Page wrapper ─────────────────────────────────── */
+#page{padding:18px 20px calc(18px + var(–safe-bot));max-width:1440px;margin:0 auto;}
+
+/* ── Panel ────────────────────────────────────────── */
+.p{background:var(–panel);border:1px solid var(–border);border-radius:12px;padding:16px 18px;}
+
+/* ── Grids ────────────────────────────────────────── */
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px;}
+.g3l{display:grid;grid-template-columns:1fr 290px 205px;gap:12px;margin-bottom:14px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 205px 205px;gap:12px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding-left:8px;}
+
+/* ── KPI cards ────────────────────────────────────── */
+.kpi{background:var(–panel);border:1px solid var(–border);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;}
+.kpi-val{font-family:‘SF Mono’,‘Courier New’,monospace;font-size:22px;font-weight:500;letter-spacing:-.02em;line-height:1.1;margin:4px 0;}
+.kpi-sub{font-family:‘SF Mono’,‘Courier New’,monospace;font-size:10px;color:var(–textm);}
+
+/* ── Bars ─────────────────────────────────────────── */
+.bar-track{height:5px;background:var(–border);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.bar-thick{height:8px;}
+
+/* ── Chip ─────────────────────────────────────────── */
+.chip{display:inline-block;font-family:‘SF Mono’,‘Courier New’,monospace;font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid;white-space:nowrap;margin:2px 2px 2px 0;}
+
+/* ── Buttons ──────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;font-weight:500;cursor:pointer;transition:all .15s;min-height:40px;padding:8px 16px;font-size:13px;border:none;}
+.btn-green{background:var(–green);color:#0d1117;}
+.btn-outline{background:none;border:1px solid var(–border);color:var(–textm);}
+.btn-sm{min-height:32px;padding:4px 12px;font-size:11px;font-family:‘SF Mono’,‘Courier New’,monospace;}
+
+/* ── Toggle ───────────────────────────────────────── */
+.toggle-row{display:flex;gap:6px;}
+.tgl{flex:1;padding:8px;border-radius:7px;border:1px solid var(–border);background:none;color:var(–textm);font-family:‘SF Mono’,‘Courier New’,monospace;font-size:11px;cursor:pointer;min-height:36px;transition:all .15s;}
+.tgl.on{border-color:var(–cat-col);background:color-mix(in srgb,var(–cat-col) 15%,transparent);color:var(–cat-col);}
+
+/* ── Inputs ───────────────────────────────────────── */
+.inp{width:100%;background:var(–panel3);border:1px solid var(–border);border-radius:7px;padding:10px 12px;color:var(–text);font-family:‘SF Mono’,‘Courier New’,monospace;font-size:13px;-webkit-appearance:none;}
+select.inp{cursor:pointer;}
+textarea.inp{resize:vertical;font-family:-apple-system,‘SF Pro Display’,‘Helvetica Neue’,sans-serif;font-size:13px;}
+.fld-label{font-family:‘SF Mono’,‘Courier New’,monospace;font-size:9px;color:var(–textd);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fw{grid-column:1/-1;}
+
+/* ── Position cards ───────────────────────────────── */
+.pos-card{background:var(–panel2);border:1px solid var(–border);border-radius:10px;padding:14px 16px;border-left:3px solid;}
+.pos-title{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pos-val{font-family:‘SF Mono’,‘Courier New’,monospace;font-size:16px;font-weight:500;}
+.pos-sub{font-family:‘SF Mono’,‘Courier New’,monospace;font-size:10px;color:var(–textm);margin-top:1px;}
+
+/* ── Modal ────────────────────────────────────────── */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:16px;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
+#overlay.show{display:flex;}
+#modal{background:var(–panel);border-radius:14px;width:100%;max-width:620px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.modal-hdr{position:sticky;top:0;background:var(–panel);padding:18px 22px 14px;border-bottom:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;z-index:1;border-radius:14px 14px 0 0;}
+.modal-body{padding:22px;}
+.modal-cat-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+
+/* ── Gain box ─────────────────────────────────────── */
+.gain-box{margin-top:14px;border-radius:8px;padding:10px 14px;display:flex;gap:20px;}
+
+/* ── Summary bar ──────────────────────────────────── */
+.sum5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+.sum-card{background:var(–panel);border:1px solid var(–border);border-radius:10px;padding:14px 16px;}
+.sum-val{font-family:‘SF Mono’,‘Courier New’,monospace;font-size:18px;font-weight:500;margin:4px 0;}
+.sum-sub{font-family:‘SF Mono’,‘Courier New’,monospace;font-size:9px;color:var(–textm);}
+
+/* ── Install banner ───────────────────────────────── */
+#install-banner{display:none;position:fixed;bottom:calc(16px + var(–safe-bot));left:50%;transform:translateX(-50%);background:var(–panel);border:1px solid var(–borderl);border-radius:14px;padding:14px 18px;max-width:420px;width:calc(100% - 32px);z-index:150;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+#install-banner.show{display:block;}
+
+/* ── AI loading dots ──────────────────────────────── */
+.dot{width:6px;height:6px;border-radius:50%;background:var(–green);display:inline-block;animation:pulse 1.2s infinite;}
+
+/* ── Donut SVG ────────────────────────────────────── */
+.donut-wrap{display:flex;justify-content:center;margin-bottom:14px;}
+
+/* ── Responsive — iPad Pro 13” portrait ─────────── */
+@media(max-width:1100px){
+.g5{grid-template-columns:repeat(3,1fr);}
+.g3l{grid-template-columns:1fr 260px;}
+.g3l .hide-md{display:none;}
+.g4{grid-template-columns:1fr 1fr;}
+.g3{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:820px){
+.g5{grid-template-columns:repeat(2,1fr);}
+.g3l,.g4,.g3{grid-template-columns:1fr;}
+.gcards{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:540px){
+.g5{grid-template-columns:1fr 1fr;}
+.gcards{grid-template-columns:1fr;}
+.sum5{grid-template-columns:1fr 1fr;}
+#page{padding:12px 14px calc(12px + var(–safe-bot));}
+}
+</style>
+
+</head>
+<body>
+
+<div id="nav">
+  <div class="nav-logo">
+    <div class="nav-icon">₿</div>
+    <div class="nav-title">Vermögens-Dashboard</div>
+  </div>
+  <button class="tab on" data-tab="overview">Übersicht</button>
+  <button class="tab" data-tab="positionen">Positionen</button>
+  <button class="tab" data-tab="analyse">Analyse</button>
+  <button class="tab" data-tab="szenarien">Szenarien</button>
+  <button class="tab" data-tab="planung">Planung</button>
+  <button class="tab" data-tab="watchlist">Watchlist</button>
+  <button class="tab" data-tab="einstellungen">Einstellungen</button>
+  <div class="nav-time" id="navtime"></div>
+</div>
+
+<div id="page"></div>
+
+<!-- Modal -->
+
+<div id="overlay">
+  <div id="modal">
+    <div class="modal-hdr">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="modal-cat-icon" id="m-icon"></div>
+        <div>
+          <div style="font-size:15px;font-weight:600;" id="m-title"></div>
+          <div style="font-size:10px;color:var(--textm);font-family:monospace;" id="m-sub"></div>
+        </div>
+      </div>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--textd);font-size:24px;padding:4px 8px;cursor:pointer;min-height:44px;min-width:44px;">×</button>
+    </div>
+    <div class="modal-body" id="m-body"></div>
+  </div>
+</div>
+
+<!-- Install hint -->
+
+<div id="install-banner">
+  <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📲 Als App speichern</div>
+  <div style="font-size:12px;color:var(--textm);line-height:1.5;">Tippe auf <strong style="color:var(--text);">Teilen ↑</strong> und dann <strong style="color:var(--text);">„Zum Home-Bildschirm"</strong> — dann startet das Dashboard wie eine App.</div>
+  <button onclick="document.getElementById('install-banner').classList.remove('show');localStorage.setItem('install_dismissed','1');" style="margin-top:10px;background:var(--green);border:none;border-radius:7px;padding:7px 16px;font-size:12px;font-weight:600;color:#0d1117;cursor:pointer;width:100%;">Verstanden</button>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   DATA & STORAGE
+════════════════════════════════════════════════════ */
+const STORE = 'vd4';
+function load(){
+  try{ const d=localStorage.getItem(STORE); if(d) return JSON.parse(d); }catch(e){}
+  return {positions:[],cashflow:{inc:0,exp:0},goals:[],watchlist:[],email:'',updated:today()};
+}
+function save(s){ try{ localStorage.setItem(STORE,JSON.stringify(s)); }catch(e){} }
+let S = load();
+
+function today(){ return new Date().toISOString().slice(0,10); }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function eur(n,d=0){ return new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:d}).format(n||0); }
+function pct(n,plus=true){ const v=(n||0).toFixed(2).replace('.',','); return (plus&&n>0?'+':'')+v+'%'; }
+function num(n,d=2){ return (n||0).toFixed(d).replace('.',','); }
+function fmtDate(s){ return s?new Date(s).toLocaleDateString('de-DE'):'—'; }
+function daysUntil(s){ if(!s)return null; return Math.ceil((new Date(s)-new Date())/(864e5)); }
+
+/* ════════════════════════════════════════════════════
+   CATEGORIES
+════════════════════════════════════════════════════ */
+const CATS = [
+  {id:'girokonto', label:'Girokonto',         icon:'🏦', grp:'Liquidität',        col:'#14b8a6', neg:false,
+   fields:['bank','iban_last4','value','note'], desc:'Laufendes Konto'},
+  {id:'tagesgeld', label:'Tagesgeld',          icon:'💰', grp:'Liquidität',        col:'#22c55e', neg:false,
+   fields:['bank','value','rate_pa','note'], desc:'Flexibles Sparkonto'},
+  {id:'festgeld',  label:'Festgeld',           icon:'🔒', grp:'Liquidität',        col:'#60a5fa', neg:false,
+   fields:['bank','value','rate_pa','start_date','end_date','note'], desc:'Festzinsanlage'},
+  {id:'kaution',   label:'Kaution',            icon:'🔑', grp:'Sonstiges',         col:'#8899aa', neg:false,
+   fields:['bank','value','deposit_date','return_date','note'], desc:'Mietkaution'},
+  {id:'etf',       label:'ETF / Fonds',        icon:'📈', grp:'Wertpapiere',       col:'#22c55e', neg:false,
+   fields:['name','isin','sparplan','value','shares','buy_price_avg','buy_date','sparrate','ytd','note'], desc:'Indexfonds, Sparpläne', isin:true},
+  {id:'aktien',    label:'Aktien Einzeltitel', icon:'📊', grp:'Wertpapiere',       col:'#3b82f6', neg:false,
+   fields:['name','isin','ticker','value','shares','buy_price_avg','buy_date','current_price','ytd','note'], desc:'Einzelaktien', isin:true},
+  {id:'robo',      label:'Robo-Advisory',      icon:'🤖', grp:'Wertpapiere',       col:'#a855f7', neg:false,
+   fields:['provider','strategy','type_robo','value','buy_cost','sparrate','start_date','ytd','note'], desc:'Oskar, Scalable, Quirion'},
+  {id:'krypto',    label:'Krypto',             icon:'₿',  grp:'Krypto',            col:'#f7931a', neg:false,
+   fields:['crypto_name','crypto_symbol','crypto_type','value','amount','buy_price_avg','buy_date','current_price','sparplan','sparrate','wallet_type','wallet_label','ytd','note'], desc:'Bitcoin, ETH, Altcoins', crypto:true},
+  {id:'kreditkarte',label:'Kreditkarte',       icon:'💳', grp:'Verbindlichkeiten', col:'#ef4444', neg:true,
+   fields:['bank','card_type','outstanding','billing_date','note'], desc:'Offener Saldo (negativ)'},
+];
+const GRPS = ['Liquidität','Wertpapiere','Krypto','Sonstiges','Verbindlichkeiten'];
+const CAT = id => CATS.find(c=>c.id===id)||CATS[0];
+
+const FMETA = {
+  bank:         {lbl:'Bank / Institut',         t:'text',   ph:'z.B. ING, DKB, Comdirect'},
+  iban_last4:   {lbl:'IBAN (letzte 4)',          t:'text',   ph:'z.B. 4521', max:4},
+  value:        {lbl:'Aktueller Wert (€)',       t:'number', ph:'z.B. 5000'},
+  rate_pa:      {lbl:'Zinssatz p.a. (%)',        t:'number', ph:'z.B. 3.5'},
+  start_date:   {lbl:'Beginn',                   t:'date'},
+  end_date:     {lbl:'Fälligkeit',               t:'date'},
+  deposit_date: {lbl:'Eingezahlt am',            t:'date'},
+  return_date:  {lbl:'Rückgabe geplant',         t:'date'},
+  name:         {lbl:'Name / Bezeichnung',       t:'text',   ph:'z.B. MSCI World ETF'},
+  isin:         {lbl:'ISIN',                     t:'text',   ph:'z.B. IE00B4L5Y983', max:12},
+  ticker:       {lbl:'Ticker',                   t:'text',   ph:'z.B. IWDA'},
+  shares:       {lbl:'Stückzahl',                t:'number', ph:'z.B. 42.5'},
+  buy_price_avg:{lbl:'Ø Kaufkurs (€)',           t:'number', ph:'z.B. 78.20'},
+  current_price:{lbl:'Aktueller Kurs (€)',       t:'number', ph:'manuell eintragen'},
+  buy_date:     {lbl:'Erstkaufdatum',            t:'date'},
+  sparplan:     {lbl:'Sparplan aktiv?',          t:'toggle'},
+  sparrate:     {lbl:'Sparrate (€/Monat)',       t:'number', ph:'z.B. 200'},
+  ytd:          {lbl:'Performance YTD (%)',      t:'number', ph:'z.B. 8.5 oder -3.2'},
+  provider:     {lbl:'Anbieter',                 t:'text',   ph:'z.B. Oskar, Scalable'},
+  strategy:     {lbl:'Strategie',                t:'text',   ph:'z.B. 70/30'},
+  type_robo:    {lbl:'Typ',                      t:'select', opts:['Sparplan','Einmalanlage','Beides']},
+  buy_cost:     {lbl:'Eingezahltes Kapital (€)', t:'number', ph:'Gesamte Einzahlungen'},
+  card_type:    {lbl:'Kartentyp',                t:'text',   ph:'z.B. Visa, Mastercard'},
+  outstanding:  {lbl:'Offener Saldo (€)',        t:'number', ph:'Aktuelle Abrechnung'},
+  billing_date: {lbl:'Abrechnungsdatum',         t:'date'},
+  crypto_name:  {lbl:'Name',                     t:'text',   ph:'z.B. Bitcoin, Ethereum'},
+  crypto_symbol:{lbl:'Symbol',                   t:'text',   ph:'z.B. BTC, ETH, SOL', max:10},
+  crypto_type:  {lbl:'Art',                      t:'select', opts:['Coin (L1)','Token / DeFi','Stablecoin','Staking-Position','NFT','Sonstiges']},
+  amount:       {lbl:'Menge (Coins/Token)',       t:'number', ph:'z.B. 0.05432'},
+  wallet_type:  {lbl:'Verwahrung',               t:'select', opts:['Exchange (Custodial)','Hardware Wallet','Software Wallet','Cold Storage','Staking-Protokoll','Sonstiges']},
+  wallet_label: {lbl:'Exchange / Wallet Name',   t:'text',   ph:'z.B. Bitpanda, Ledger, MetaMask'},
+  note:         {lbl:'Notiz',                    t:'textarea',ph:'Strategie, Besonderheiten…'},
+};
+
+/* ════════════════════════════════════════════════════
+   COMPUTED METRICS
+════════════════════════════════════════════════════ */
+function metrics(){
+  const p = S.positions;
+  const totalPos = p.filter(e=>{const c=CAT(e.cat_id);return c&&!c.neg;}).reduce((s,e)=>s+pv(e),0);
+  const totalNeg = p.filter(e=>{const c=CAT(e.cat_id);return c&&c.neg;}).reduce((s,e)=>s+parseFloat(e.outstanding||0),0);
+  const net = totalPos - totalNeg;
+  const liq = p.filter(e=>['girokonto','tagesgeld','festgeld','kaution'].includes(e.cat_id)).reduce((s,e)=>s+pv(e),0);
+  const sec = p.filter(e=>['etf','aktien','robo','krypto'].includes(e.cat_id)).reduce((s,e)=>s+pv(e),0);
+  const krypto = p.filter(e=>e.cat_id==='krypto').reduce((s,e)=>s+pv(e),0);
+  const sparraten = p.filter(e=>e.sparrate).reduce((s,e)=>s+parseFloat(e.sparrate||0),0);
+  const ytdGain = p.filter(e=>e.ytd).reduce((s,e)=>s+pv(e)*(parseFloat(e.ytd||0)/100),0);
+  const ytdPct = net>0?(ytdGain/(net-ytdGain))*100:0;
+  const cf = S.cashflow; const netCF=(cf.inc||0)-(cf.exp||0);
+  const byLabel={};
+  p.forEach(e=>{const c=CAT(e.cat_id);if(!c||c.neg)return;byLabel[c.label]=(byLabel[c.label]||0)+pv(e);});
+  const equityPct=(((byLabel['ETF / Fonds']||0)+(byLabel['Aktien Einzeltitel']||0)+(byLabel['Robo-Advisory']||0))/net)*100||0;
+  const liqPct=(liq/net)*100||0;
+  const kryptoPct=(krypto/net)*100||0;
+  let risk=4;
+  if(kryptoPct>10)risk++;if(equityPct>80)risk++;if(liqPct<5)risk++;
+  risk=Math.min(risk,9);
+  return {net,totalPos,totalNeg,liq,sec,krypto,sparraten,ytdGain,ytdPct,netCF,byLabel,equityPct,liqPct,kryptoPct,risk,p};
+}
+function pv(e){ return parseFloat(e.value||e.outstanding||0); }
+function catColor(id){
+  return {girokonto:'#14b8a6',tagesgeld:'#22c55e',festgeld:'#60a5fa',kaution:'#8899aa',
+          etf:'#22c55e',aktien:'#3b82f6',robo:'#a855f7',krypto:'#f7931a',kreditkarte:'#ef4444'}[id]||'#60a5fa';
+}
+function labelColor(lbl){
+  return {'ETF / Fonds':'#22c55e','Aktien Einzeltitel':'#3b82f6','Robo-Advisory':'#a855f7',
+          'Krypto':'#f7931a','Tagesgeld':'#22c55e','Festgeld':'#60a5fa','Girokonto':'#14b8a6',
+          'Kaution':'#8899aa','Kreditkarte':'#ef4444'}[lbl]||'#60a5fa';
+}
+
+/* ════════════════════════════════════════════════════
+   SVG HELPERS
+════════════════════════════════════════════════════ */
+function donutSVG(data, total, size=160){
+  if(!data.length||!total) return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${size/2-14}" fill="none" stroke="#232c3d" stroke-width="20"/><text x="${size/2}" y="${size/2+5}" text-anchor="middle" fill="#4a5568" font-size="11" font-family="monospace">Leer</text></svg>`;
+  const cx=size/2,cy=size/2,r=size/2-14,ri=r*.62;
+  let angle=-Math.PI/2,paths='';
+  data.forEach(d=>{
+    const frac=d.v/total;
+    const a1=angle,a2=angle+frac*2*Math.PI; angle=a2;
+    const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+    const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+    const xi1=cx+ri*Math.cos(a1),yi1=cy+ri*Math.sin(a1);
+    const xi2=cx+ri*Math.cos(a2),yi2=cy+ri*Math.sin(a2);
+    const lg=frac>.5?1:0;
+    paths+=`<path d="M${xi1},${yi1} L${x1},${y1} A${r},${r} 0 ${lg} 1 ${x2},${y2} L${xi2},${yi2} A${ri},${ri} 0 ${lg} 0 1 ${xi1},${yi1}Z" fill="${d.col}" opacity=".9" stroke="#0d1117" stroke-width="1.5"/>`;
+  });
+  return `<svg width="${size}" height="${size}">${paths}<circle cx="${cx}" cy="${cy}" r="${ri-2}" fill="#161b27"/><text x="${cx}" y="${cy-6}" text-anchor="middle" fill="#e2e8f0" font-size="12" font-family="monospace" font-weight="500">${eur(total,0)}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" fill="#8899aa" font-size="9" font-family="monospace">Netto</text></svg>`;
+}
+
+function sparkSVG(pts,color,w=600,h=140){
+  if(!pts||pts.length<2) return `<div style="height:${h}px;display:flex;align-items:center;justify-content:center;background:var(--panel2);border-radius:8px;color:var(--textd);font-size:11px;font-family:monospace;">Positionen erfassen → Tab „Positionen"</div>`;
+  const mn=Math.min(...pts)*.98,mx=Math.max(...pts)*1.01,rng=mx-mn||1;
+  const n=pts.length;
+  const xs=pts.map((_,i)=>i/(n-1)*w);
+  const ys=pts.map(v=>h-(v-mn)/rng*(h-8)-4);
+  const d='M'+xs.map((x,i)=>`${x},${ys[i]}`).join(' L');
+  return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block">
+    <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity=".25"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${d} L${w},${h} L0,${h} Z" fill="url(#sg)"/>
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${xs[xs.length-1]}" cy="${ys[ys.length-1]}" r="4" fill="${color}"/>
+  </svg>`;
+}
+
+function riskGauge(score){
+  const col=score<=4?'#22c55e':score<=6?'#f59e0b':'#ef4444';
+  const lbl=score<=4?'Konservativ':score<=6?'Moderat':'Aggressiv';
+  const arc=score/10*125.6;
+  return `<div style="text-align:center">
+    <svg width="110" height="60" viewBox="0 0 110 60">
+      <path d="M12,54 A43,43 0 0 1 98,54" fill="none" stroke="#232c3d" stroke-width="9" stroke-linecap="round"/>
+      <path d="M12,54 A43,43 0 0 1 98,54" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${arc} 135" opacity=".9"/>
+      <text x="55" y="50" text-anchor="middle" fill="${col}" font-size="22" font-family="monospace" font-weight="600">${score}</text>
+    </svg>
+    <div style="font-family:monospace;font-size:10px;color:${col};margin-top:-4px">${lbl}</div>
+  </div>`;
+}
+
+function progBar(val,max,col,thick=false){
+  const p=Math.min((val/max)*100,100)||0;
+  return `<div class="bar-track${thick?' bar-thick':''}"><div class="bar-fill" style="width:${p}%;background:${col}"></div></div>`;
+}
+
+/* ════════════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════════════ */
+let currentTab='overview';
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click',()=>showTab(btn.dataset.tab));
+});
+function showTab(id){
+  currentTab=id;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
+  render();
+}
+function render(){
+  const pg=document.getElementById('page');
+  pg.innerHTML='';
+  try {
+    if(currentTab==='overview')    pg.innerHTML=renderOverview();
+    if(currentTab==='positionen')  pg.innerHTML=renderPositionen();
+    if(currentTab==='analyse')     pg.innerHTML=renderAnalyse();
+    if(currentTab==='szenarien')   pg.innerHTML=renderSzenarien();
+    if(currentTab==='planung')     pg.innerHTML=renderPlanung();
+    if(currentTab==='watchlist')   pg.innerHTML=renderWatchlist();
+    if(currentTab==='einstellungen')pg.innerHTML=renderEinstellungen();
+  } catch(e) {
+    pg.innerHTML='<div style="padding:40px;color:#ef4444;font-family:monospace;font-size:12px">Fehler: '+e.message+'<br><br>'+e.stack+'</div>';
+  }
+  bindEvents();
+  updatePosCount();
+}
+function updatePosCount(){
+  const n=S.positions.length;
+  document.querySelectorAll('.tab').forEach(b=>{
+    if(b.dataset.tab==='positionen') b.textContent=`Positionen${n>0?' ('+n+')':''}`;
+  });
+}
+
+/* ════════════════════════════════════════════════════
+   OVERVIEW
+════════════════════════════════════════════════════ */
+function renderOverview(){
+  const m=metrics();
+  const net=m.net, totalPos=m.totalPos, totalNeg=m.totalNeg;
+  const liq=m.liq, sec=m.sec, krypto=m.krypto, sparraten=m.sparraten;
+  const ytdGain=m.ytdGain, ytdPct=m.ytdPct, netCF=m.netCF;
+  const byLabel=m.byLabel, liqPct=m.liqPct, kryptoPct=m.kryptoPct;
+  const equityPct=m.equityPct, risk=m.risk, p=m.p;
+  const cf=S.cashflow;
+  const goals=S.goals;
+
+  // Donut data
+  const donutD=Object.entries(byLabel).sort((a,b)=>b[1]-a[1]).map(function(e){return {lbl:e[0],v:e[1],col:labelColor(e[0])};});
+
+  // Perf by label
+  const perfD=Object.entries(byLabel).map(function(e){
+    const lbl=e[0],v=e[1];
+    const ps=p.filter(function(x){return CAT(x.cat_id).label===lbl;});
+    const w=ps.reduce(function(s,x){return s+(parseFloat(x.ytd||0))*(pv(x)/v);},0);
+    return {lbl:lbl,w:w,v:v};
+  }).sort(function(a,b){return b.w-a.w;});
+  const maxPerf=Math.max.apply(null,perfD.map(function(x){return Math.abs(x.w);}).concat([1]));
+
+  // Sparkline
+  const spark=[];
+  for(var i=0;i<13;i++){
+    var t=i/12;
+    var base=net>0?net*(0.82+t*0.18):500+i*80;
+    spark.push(base*(1+(Math.random()-0.5)*0.025));
+  }
+  if(net>0)spark[12]=net;
+
+  // Winners/losers
+  const scored=p.filter(function(e){return e.ytd;}).map(function(e){return Object.assign({},e,{yn:parseFloat(e.ytd||0)});}).sort(function(a,b){return b.yn-a.yn;});
+  const winners=scored.filter(function(e){return e.yn>0;}).slice(0,5);
+  const losers=scored.filter(function(e){return e.yn<0;}).slice(0,4);
+
+  const TGTS={'ETF / Fonds':50,'Aktien Einzeltitel':15,'Krypto':7,'Robo-Advisory':8,'Festgeld':10,'Tagesgeld':5,'Girokonto':3};
+
+  // Build HTML with string concat - no nested template literals
+  var h='';
+
+  // ROW 1: KPIs
+  h+='<div class="g5">';
+  h+=kpiCard('Nettovermoegen', eur(net,0), totalNeg>0?(eur(totalPos,0)+' brutto'):'', '#d4a843', '&#9672;');
+  h+=kpiCard('Performance YTD', pct(ytdPct), eur(ytdGain,0)+' absolut', ytdPct>=0?'#22c55e':'#ef4444', ytdPct>=0?'&uarr;':'&darr;');
+  h+=kpiCard('Liquiditaet', eur(liq,0), num(liqPct)+'% des Netto', '#14b8a6', '&#128176;');
+  h+=kpiCard('Sparraten / Monat', eur(sparraten,0), p.filter(function(e){return e.sparrate;}).length+' aktive Plaene', '#a855f7', '&#128197;');
+  h+=kpiCard('Cashflow netto', (netCF>=0?'+':'')+eur(netCF,0), eur(cf.inc||0,0)+' &minus; '+eur(cf.exp||0,0), netCF>=0?'#22c55e':'#ef4444', '&#8644;');
+  h+='</div>';
+
+  // ROW 2: Chart + Donut + Risk
+  h+='<div class="g3l">';
+
+  // Sparkline panel
+  h+='<div class="p">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:8px;">';
+  h+='<div>';
+  h+='<div class="label">Vermoegensentwicklung</div>';
+  h+='<div style="font-family:monospace;font-size:26px;font-weight:500;letter-spacing:-.02em">'+eur(net,0)+'</div>';
+  if(ytdGain!==0) h+='<div style="font-family:monospace;font-size:12px;color:'+(ytdPct>=0?'#22c55e':'#ef4444')+';margin-top:2px">'+pct(ytdPct)+' YTD &nbsp;&middot;&nbsp; '+eur(ytdGain,0)+' absolut</div>';
+  h+='</div>';
+  h+='<div style="display:flex;gap:14px;flex-wrap:wrap;">';
+  var summaries=[['Wertpapiere',sec,'#22c55e'],['Liquiditaet',liq,'#14b8a6'],['Verbindlichkeiten',totalNeg,'#ef4444']];
+  summaries.forEach(function(k){
+    if(k[1]>0){
+      h+='<div style="text-align:right">';
+      h+='<div style="font-family:monospace;font-size:9px;color:var(--textd);letter-spacing:.06em">'+k[0].toUpperCase()+'</div>';
+      h+='<div style="font-family:monospace;font-size:14px;color:'+k[2]+';font-weight:500">'+(k[0]==='Verbindlichkeiten'?'-':'')+eur(k[1],0)+'</div>';
+      h+='</div>';
+    }
+  });
+  h+='</div></div>';
+  h+='<div style="border-radius:8px;overflow:hidden;">'+sparkSVG(spark,'#22c55e')+'</div>';
+  h+='<div style="display:flex;justify-content:space-between;margin-top:6px;">';
+  ['Mai 24','Jul 24','Sep 24','Nov 24','Jan 25','Mrz 25','Mai 26'].forEach(function(l){
+    h+='<span style="font-family:monospace;font-size:9px;color:var(--textd)">'+l+'</span>';
+  });
+  h+='</div></div>';
+
+  // Donut panel
+  h+='<div class="p">';
+  h+='<div class="label">Asset Allocation</div>';
+  h+='<div class="donut-wrap">'+donutSVG(donutD,net,150)+'</div>';
+  donutD.forEach(function(d){
+    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">';
+    h+='<div style="width:7px;height:7px;border-radius:2px;background:'+d.col+';flex-shrink:0"></div>';
+    h+='<span style="flex:1;font-size:11px;color:var(--textm)">'+d.lbl+'</span>';
+    h+='<span style="font-family:monospace;font-size:11px">'+(net>0?num((d.v/net)*100):0)+'%</span>';
+    h+='<span style="font-family:monospace;font-size:10px;color:var(--textd);min-width:58px;text-align:right">'+eur(d.v,0)+'</span>';
+    h+='</div>';
+  });
+  if(totalNeg>0){
+    h+='<div style="border-top:1px solid var(--border);padding-top:6px;margin-top:4px;display:flex;align-items:center;gap:6px;">';
+    h+='<div style="width:7px;height:7px;border-radius:2px;background:#ef4444;flex-shrink:0"></div>';
+    h+='<span style="flex:1;font-size:11px;color:#ef4444">Verbindlichkeiten</span>';
+    h+='<span style="font-family:monospace;font-size:11px;color:#ef4444">-'+eur(totalNeg,0)+'</span>';
+    h+='</div>';
+  }
+  h+='</div>';
+
+  // Risk panel
+  h+='<div class="p hide-md" style="display:flex;flex-direction:column;gap:12px;">';
+  h+='<div class="label">Risiko-Score</div>';
+  h+=riskGauge(risk);
+  h+='<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">';
+  var riskItems=[
+    ['Aktienquote',num(equityPct)+'%',equityPct<=80],
+    ['Kryptoquote',num(kryptoPct)+'%',kryptoPct<=10],
+    ['Liquiditaet',num(liqPct)+'%',liqPct>=5],
+    ['Sparrate',eur(sparraten,0),sparraten>0]
+  ];
+  riskItems.forEach(function(r){
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+    h+='<span style="font-size:11px;color:var(--textm)">'+r[0]+'</span>';
+    h+='<div style="display:flex;align-items:center;gap:5px;">';
+    h+='<span style="font-family:monospace;font-size:11px">'+r[1]+'</span>';
+    h+='<div style="width:7px;height:7px;border-radius:50%;background:'+(r[2]?'#22c55e':'#f59e0b')+';box-shadow:0 0 4px '+(r[2]?'#22c55e':'#f59e0b')+'"></div>';
+    h+='</div></div>';
+  });
+  h+='</div></div>';
+  h+='</div>'; // end g3l
+
+  // ROW 3
+  h+='<div class="g4">';
+
+  // Performance panel
+  h+='<div class="p">';
+  h+='<div class="label">Performance YTD nach Kategorie</div>';
+  if(perfD.length===0) h+='<div style="font-family:monospace;font-size:10px;color:var(--textd)">YTD-Werte bei Positionen eintragen</div>';
+  perfD.forEach(function(item){
+    var lbl=item.lbl, w=item.w;
+    var barW=Math.min(Math.abs(w)/maxPerf*100,100);
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+    h+='<div style="width:7px;height:7px;border-radius:2px;background:'+labelColor(lbl)+';flex-shrink:0"></div>';
+    h+='<span style="font-size:12px;color:var(--textm);width:155px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+lbl+'</span>';
+    h+='<div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">';
+    h+='<div style="width:'+barW+'%;height:100%;background:'+(w>=0?'#22c55e':'#ef4444')+';border-radius:3px"></div></div>';
+    h+='<span style="font-family:monospace;font-size:11px;color:'+(w>=0?'#22c55e':'#ef4444')+';min-width:52px;text-align:right;font-weight:500">'+pct(w)+'</span>';
+    h+='</div>';
+  });
+  h+='<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:2px;display:flex;align-items:center;gap:8px;">';
+  h+='<div style="width:7px;height:7px;border-radius:2px;background:#d4a843;flex-shrink:0"></div>';
+  h+='<span style="font-size:12px;font-weight:600;width:155px;flex-shrink:0">Gesamt</span>';
+  h+='<div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">';
+  h+='<div style="width:'+Math.min(Math.abs(ytdPct)/20*100,100)+'%;height:100%;background:'+(ytdPct>=0?'#d4a843':'#ef4444')+';border-radius:3px"></div></div>';
+  h+='<span style="font-family:monospace;font-size:11px;color:#d4a843;min-width:52px;text-align:right;font-weight:500">'+pct(ytdPct)+'</span>';
+  h+='</div></div>';
+
+  // Top/Flop panel
+  h+='<div class="p">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">';
+  h+='<div class="label" style="margin-bottom:0">Top &amp; Flop</div>';
+  h+='<div style="display:flex;gap:4px;">';
+  h+='<button class="btn btn-sm" id="win-btn" style="background:#22c55e;color:#0d1117;border:none;" onclick="toggleWin(\'winner\')">Gewinner</button>';
+  h+='<button class="btn btn-sm btn-outline" id="los-btn" onclick="toggleWin(\'loser\')">Verlierer</button>';
+  h+='</div></div>';
+  h+='<div id="win-list">'+renderWinList(winners)+'</div>';
+  h+='</div>';
+
+  // Ziele panel
+  h+='<div class="p">';
+  h+='<div class="label">Sparziele</div>';
+  if(goals.length===0) h+='<div style="font-family:monospace;font-size:10px;color:var(--textd)">Ziele im Tab &ldquo;Planung&rdquo; anlegen</div>';
+  goals.forEach(function(g){
+    var pr=Math.min((g.current/g.target)*100,100)||0;
+    var dl=daysUntil(g.deadline);
+    h+='<div style="margin-bottom:14px;">';
+    h+='<div style="font-size:12px;font-weight:500;margin-bottom:5px">'+g.name+'</div>';
+    h+=progBar(g.current,g.target,'#14b8a6',true);
+    h+='<div style="display:flex;justify-content:space-between;margin-top:4px;">';
+    h+='<span style="font-family:monospace;font-size:10px;color:var(--textm)">'+eur(g.current,0)+' / '+eur(g.target,0)+'</span>';
+    h+='<span style="font-family:monospace;font-size:10px;color:#22c55e">'+num(pr,0)+'%</span>';
+    h+='</div>';
+    if(dl!==null&&dl>0&&dl<365) h+='<div style="font-family:monospace;font-size:9px;color:var(--textd);margin-top:2px">'+dl+' Tage verbleibend</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // Makro panel
+  h+='<div class="p">';
+  h+='<div class="label">Markt &amp; Makro</div>';
+  var makro=[
+    ['MSCI World (EUR)','3.512','up'],['DAX','24.201','up'],['S&P 500','5.621','up'],
+    ['Inflation (DE)','2,3%','down'],['EZB Leitzins','2,25%','neutral'],
+    ['&Ouml;lpreis (Brent)','71,3 $','down'],['Bitcoin (BTC)','102.450 $','up']
+  ];
+  makro.forEach(function(m){
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">';
+    h+='<span style="font-size:11px;color:var(--textm)">'+m[0]+'</span>';
+    h+='<div style="display:flex;align-items:center;gap:5px;">';
+    h+='<span style="font-family:monospace;font-size:11px">'+m[1]+'</span>';
+    h+='<span style="font-size:13px;color:'+(m[2]==='up'?'#22c55e':m[2]==='down'?'#ef4444':'#8899aa')+'">'+(m[2]==='up'?'&uarr;':m[2]==='down'?'&darr;':'&rarr;')+'</span>';
+    h+='</div></div>';
+  });
+  h+='</div>';
+  h+='</div>'; // end g4
+
+  // ROW 4
+  h+='<div class="g3">';
+
+  // Allokation vs Ziel
+  h+='<div class="p">';
+  h+='<div class="label">Allokation vs. Zielband</div>';
+  Object.keys(TGTS).forEach(function(lbl){
+    var tgt=TGTS[lbl];
+    var ist=(byLabel[lbl]||0)/net*100||0;
+    var diff=ist-tgt, ok=Math.abs(diff)<=3;
+    h+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:9px;">';
+    h+='<div style="width:6px;height:6px;border-radius:2px;background:'+labelColor(lbl)+';flex-shrink:0"></div>';
+    h+='<span style="font-size:11px;color:var(--textm);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+lbl+'</span>';
+    h+='<div style="width:70px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;flex-shrink:0">';
+    h+='<div style="width:'+Math.min(ist/55*100,100)+'%;height:100%;background:'+labelColor(lbl)+'"></div></div>';
+    h+='<span style="font-family:monospace;font-size:10px;min-width:28px;text-align:right">'+num(ist,0)+'%</span>';
+    h+='<span style="font-family:monospace;font-size:9px;color:var(--textd);min-width:22px;text-align:right">'+tgt+'%</span>';
+    h+='<span style="font-family:monospace;font-size:10px;min-width:30px;text-align:right;color:'+(ok?'#22c55e':diff>0?'#f59e0b':'#60a5fa')+'">'+(ok?'&#10003;':(diff>0?'+':'')+num(diff,0)+'%')+'</span>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // Liquiditaets-Detail
+  h+='<div class="p">';
+  h+='<div class="label">Liquidit&auml;ts-Detail</div>';
+  var liqPos=p.filter(function(e){return ['girokonto','tagesgeld','festgeld','kaution'].includes(e.cat_id);});
+  if(liqPos.length===0) h+='<div style="font-family:monospace;font-size:10px;color:var(--textd)">Liquidit&auml;tspositionen im Tab &ldquo;Positionen&rdquo; erfassen</div>';
+  liqPos.forEach(function(e){
+    var cat=CAT(e.cat_id), v=pv(e), dl=e.end_date?daysUntil(e.end_date):null;
+    h+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">';
+    h+='<span style="font-size:16px;flex-shrink:0">'+cat.icon+'</span>';
+    h+='<div style="flex:1;min-width:0">';
+    h+='<div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(e.bank||e.name||cat.label)+'</div>';
+    h+='<div style="font-family:monospace;font-size:9px;color:var(--textd)">'+cat.label+(e.rate_pa?' &middot; '+e.rate_pa+'% p.a.':'')+(dl!==null&&dl<180?'<span style="color:#f59e0b"> &middot; f&auml;llig in '+dl+'d</span>':'')+'</div>';
+    h+='</div>';
+    h+='<div style="text-align:right;flex-shrink:0">';
+    h+='<div style="font-family:monospace;font-size:13px;font-weight:500">'+eur(v,0)+'</div>';
+    h+='<div style="font-family:monospace;font-size:9px;color:var(--textd)">'+(net>0?num((v/net)*100,1):0)+'%</div>';
+    h+='</div></div>';
+  });
+  h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--borderl);display:flex;justify-content:space-between">';
+  h+='<span style="font-size:12px;font-weight:600">Gesamt</span>';
+  h+='<span style="font-family:monospace;font-size:14px;color:#14b8a6;font-weight:500">'+eur(liq,0)+'</span>';
+  h+='</div></div>';
+
+  // Cashflow + Sparplaene
+  h+='<div class="p">';
+  h+='<div class="label">Cashflow &amp; Sparpl&auml;ne</div>';
+  h+='<div class="g2" style="gap:8px;margin-bottom:14px;">';
+  var cfItems=[
+    ['Einnahmen',eur(cf.inc||0,0),'#22c55e'],
+    ['Ausgaben',eur(cf.exp||0,0),'#ef4444'],
+    ['Netto',(netCF>=0?'+':'')+eur(netCF,0),netCF>=0?'#22c55e':'#ef4444'],
+    ['Sparraten',eur(sparraten,0),'#a855f7']
+  ];
+  cfItems.forEach(function(k){
+    h+='<div style="background:var(--panel2);border-radius:8px;padding:10px 12px;">';
+    h+='<div style="font-family:monospace;font-size:9px;color:var(--textd);margin-bottom:3px">'+k[0].toUpperCase()+'</div>';
+    h+='<div style="font-family:monospace;font-size:15px;color:'+k[2]+';font-weight:500">'+k[1]+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<div style="font-family:monospace;font-size:9px;color:var(--textd);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Aktive Sparpl&auml;ne</div>';
+  var spPlans=p.filter(function(e){return e.sparrate;}).slice(0,5);
+  if(spPlans.length===0) h+='<div style="font-family:monospace;font-size:10px;color:var(--textd)">Keine Sparpl&auml;ne erfasst</div>';
+  spPlans.forEach(function(e){
+    var cat=CAT(e.cat_id);
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">';
+    h+='<div style="display:flex;align-items:center;gap:6px;">';
+    h+='<div style="width:6px;height:6px;border-radius:2px;background:'+cat.col+';flex-shrink:0"></div>';
+    h+='<span style="font-size:11px;color:var(--textm);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(e.crypto_name||e.name||e.provider||cat.label)+'</span>';
+    h+='</div>';
+    h+='<span style="font-family:monospace;font-size:11px;color:#a855f7">'+eur(parseFloat(e.sparrate),0)+'/Mo</span>';
+    h+='</div>';
+  });
+  var extraPlans=p.filter(function(e){return e.sparrate;}).length;
+  if(extraPlans>5) h+='<div style="font-family:monospace;font-size:9px;color:var(--textd);margin-top:4px">+'+( extraPlans-5)+' weitere</div>';
+  h+='</div>';
+  h+='</div>'; // end g3
+
+  return h;
+}
+
+
+function renderWinList(list){
+  if(!list.length) return `<div style="font-family:monospace;font-size:10px;color:var(--textd);padding:16px 0;text-align:center">YTD-Werte bei Positionen eintragen</div>`;
+  return list.map((e,i)=>{
+    const cat=CAT(e.cat_id);
+    const title=e.crypto_name||e.name||e.provider||e.bank||cat.label;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2);border-radius:8px;border-left:3px solid ${cat.col};margin-bottom:6px;">
+      <span style="font-family:monospace;font-size:11px;color:var(--textd);min-width:16px">${i+1}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${title}</div>
+        <div style="font-family:monospace;font-size:9px;color:var(--textd)">${cat.label}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:monospace;font-size:14px;color:${e.yn>=0?'#22c55e':'#ef4444'};font-weight:600">${pct(e.yn)}</div>
+        <div style="font-family:monospace;font-size:9px;color:var(--textd)">${eur(pv(e),0)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let winMode='winner';
+function toggleWin(mode){
+  winMode=mode;
+  const scored=S.positions.filter(e=>e.ytd).map(e=>({...e,yn:parseFloat(e.ytd||0)})).sort((a,b)=>b.yn-a.yn);
+  const list=mode==='winner'?scored.filter(e=>e.yn>0).slice(0,5):scored.filter(e=>e.yn<0).slice(0,4);
+  document.getElementById('win-list').innerHTML=renderWinList(list);
+  const wb=document.getElementById('win-btn'), lb=document.getElementById('los-btn');
+  if(wb&&lb){
+    if(mode==='winner'){wb.style.background='#22c55e';wb.style.color='#0d1117';wb.style.border='none';lb.style.background='none';lb.style.color='var(--textm)';lb.style.border='1px solid var(--border)';}
+    else{lb.style.background='#ef4444';lb.style.color='#0d1117';lb.style.border='none';wb.style.background='none';wb.style.color='var(--textm)';wb.style.border='1px solid var(--border)';}
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   POSITIONEN
+════════════════════════════════════════════════════ */
+let posFilter='Alle';
+function renderPositionen(){
+  const p=S.positions;
+  const totalPos=p.filter(e=>!CAT(e.cat_id).neg).reduce((s,e)=>s+pv(e),0);
+  const totalNeg=p.filter(e=>CAT(e.cat_id).neg).reduce((s,e)=>s+parseFloat(e.outstanding||0),0);
+  const net=totalPos-totalNeg;
+  const liq=p.filter(e=>['girokonto','tagesgeld','festgeld','kaution'].includes(e.cat_id)).reduce((s,e)=>s+pv(e),0);
+  const sec=p.filter(e=>['etf','aktien','robo','krypto'].includes(e.cat_id)).reduce((s,e)=>s+pv(e),0);
+  const sparraten=p.filter(e=>e.sparrate).reduce((s,e)=>s+parseFloat(e.sparrate||0),0);
+
+  const grpBtns=['Alle',...GRPS].map(g=>`<button class="filter-chip${posFilter===g?' active':''}" onclick="filterPos('${g}')">${g}</button>`).join('');
+
+  let cats='';
+  const grps=posFilter==='Alle'?GRPS:[posFilter];
+  grps.forEach(grp=>{
+    const catsInGrp=CATS.filter(c=>c.grp===grp);
+    cats+=`<div style="margin-bottom:22px">
+      <div style="font-family:monospace;font-size:9px;color:var(--textd);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border)">${grp}</div>
+      ${catsInGrp.map(cat=>{
+        const entries=p.filter(e=>e.cat_id===cat.id);
+        const catTotal=entries.reduce((s,e)=>s+parseFloat(e.value||e.outstanding||0),0);
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:${entries.length?'10px':'0'}">
+            <button onclick="toggleCat('${cat.id}')" style="display:flex;align-items:center;gap:7px;flex:1;background:none;border:none;text-align:left;padding:5px 6px;border-radius:7px;min-height:44px;cursor:pointer;">
+              <span style="font-size:16px">${cat.icon}</span>
+              <span style="font-size:13px;font-weight:600;color:${entries.length?'var(--text)':'var(--textd)'}">${cat.label}</span>
+              ${entries.length?`<span style="font-family:monospace;font-size:10px;color:var(--textm)">(${entries.length} · ${cat.neg?'-':''}${eur(catTotal,0)})</span>`:''}
+              ${entries.length?`<span style="font-family:monospace;font-size:10px;color:var(--textd);margin-left:auto" id="arr-${cat.id}">▼</span>`:''}
+            </button>
+            <button onclick="openModal('${cat.id}',null)" style="background:color-mix(in srgb,${cat.col} 15%,transparent);border:1px solid color-mix(in srgb,${cat.col} 40%,transparent);border-radius:7px;padding:6px 14px;font-family:monospace;font-size:10px;color:${cat.col};flex-shrink:0;min-height:40px;cursor:pointer;">+ Hinzufügen</button>
+          </div>
+          <div id="cat-${cat.id}" class="gcards">
+            ${entries.length?entries.map(e=>renderPosCard(e,cat)).join(''):`<div style="background:var(--panel);border:1px dashed var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;"><span style="font-size:18px;opacity:.3">${cat.icon}</span><span style="font-family:monospace;font-size:11px;color:var(--textd)">${cat.desc} — noch keine Einträge</span></div>`}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  return `
+  <!-- Summary -->
+  <div class="sum5">
+    ${[
+      ['Nettovermögen',eur(net,0),'#d4a843',`${eur(totalPos,0)} Vermögen`],
+      ['Verbindlichkeiten',eur(totalNeg,0),'#ef4444','Offene Salden'],
+      ['Wertpapiere',eur(sec,0),'#22c55e',net>0?num((sec/net)*100,0)+'% des Netto':''],
+      ['Liquidität',eur(liq,0),'#14b8a6',net>0?num((liq/net)*100,0)+'% des Netto':''],
+      ['Sparraten/Mo',eur(sparraten,0),'#a855f7',p.filter(e=>e.sparrate).length+' Pläne'],
+    ].map(([l,v,c,s])=>`<div class="sum-card"><div class="label">${l}</div><div class="sum-val" style="color:${c}">${v}</div><div class="sum-sub">${s}</div></div>`).join('')}
+  </div>
+  <!-- Filter -->
+  <div class="filter-bar">${grpBtns}</div>
+  <!-- Categories -->
+  ${cats}`;
+}
+
+function renderPosCard(e, cat){
+  const val=parseFloat(e.value||e.outstanding||0);
+  let gain=null;
+  if(['etf','aktien'].includes(cat.id)){
+    const cost=(parseFloat(e.shares||0))*(parseFloat(e.buy_price_avg||0));
+    if(cost&&val) gain={abs:val-cost,p:((val-cost)/cost)*100};
+  }
+  if(cat.id==='krypto'){
+    const cost=(parseFloat(e.amount||0))*(parseFloat(e.buy_price_avg||0));
+    if(cost&&val) gain={abs:val-cost,p:((val-cost)/cost)*100};
+  }
+  const dLeft=cat.id==='festgeld'?daysUntil(e.end_date):null;
+  const title=e.crypto_name||e.name||e.bank||e.provider||e.card_type||cat.label;
+  const cgLink=e.crypto_name?`https://www.coingecko.com/de/munze/${e.crypto_name.toLowerCase().replace(/ /g,'-')}`:null;
+
+  const chips=[
+    e.shares?`<span class="chip" style="color:var(--textm);border-color:var(--border)">${e.shares} Stk.</span>`:'',
+    e.buy_price_avg&&cat.id!=='krypto'?`<span class="chip" style="color:var(--textm);border-color:var(--border)">Ø ${eur(parseFloat(e.buy_price_avg))}</span>`:'',
+    e.buy_price_avg&&cat.id==='krypto'?`<span class="chip" style="color:var(--textm);border-color:var(--border)">Ø ${parseFloat(e.buy_price_avg).toLocaleString('de-DE',{maximumFractionDigits:2})} €</span>`:'',
+    e.sparplan===true?`<span class="chip" style="color:#a855f7;border-color:#a855f7">Sparplan${e.sparrate?' · '+eur(parseFloat(e.sparrate),0)+'/Mo':''}</span>`:'',
+    e.sparrate&&!['etf','krypto'].includes(cat.id)?`<span class="chip" style="color:#a855f7;border-color:#a855f7">${eur(parseFloat(e.sparrate),0)}/Mo</span>`:'',
+    e.buy_date?`<span class="chip" style="color:var(--textd);border-color:var(--border)">Kauf: ${fmtDate(e.buy_date)}</span>`:'',
+    e.end_date?`<span class="chip" style="color:${dLeft!==null&&dLeft<90?'#f59e0b':'var(--textd)'};border-color:${dLeft!==null&&dLeft<90?'#f59e0b':'var(--border)'}">Fällig: ${fmtDate(e.end_date)}</span>`:'',
+    e.billing_date?`<span class="chip" style="color:var(--textd);border-color:var(--border)">Abr: ${fmtDate(e.billing_date)}</span>`:'',
+    e.iban_last4?`<span class="chip" style="color:var(--textd);border-color:var(--border)">••••${e.iban_last4}</span>`:'',
+    e.type_robo?`<span class="chip" style="color:var(--textm);border-color:var(--border)">${e.type_robo}</span>`:'',
+  ].filter(Boolean).join('');
+
+  return `<div class="pos-card fade" style="border-left-color:${cat.col}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="pos-title">${title}</div>
+          ${e.crypto_symbol?`<span class="chip" style="color:#f7931a;border-color:#f7931a;margin:0">${e.crypto_symbol.toUpperCase()}</span>`:''}
+        </div>
+        ${e.isin?`<div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+          <span style="font-family:monospace;font-size:10px;color:var(--textd)">${e.isin}</span>
+          <a href="https://www.onvista.de/suche/?searchValue=${e.isin}" target="_blank" style="font-family:monospace;font-size:9px;color:#60a5fa;padding:1px 5px;background:rgba(96,165,250,.12);border-radius:3px">↗ Kurs</a>
+        </div>`:''}
+        ${cgLink?`<a href="${cgLink}" target="_blank" style="font-family:monospace;font-size:9px;color:#f7931a;padding:1px 5px;background:rgba(247,147,26,.12);border-radius:3px;display:inline-block;margin-top:2px">↗ CoinGecko</a>`:''}
+        ${e.provider?`<div class="pos-sub">${e.provider}${e.strategy?' · '+e.strategy:''}</div>`:''}
+        ${e.wallet_label?`<div class="pos-sub">📍 ${e.wallet_label}${e.wallet_type?' ('+e.wallet_type+')':''}</div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="pos-val" style="color:${cat.neg?'#ef4444':'var(--text)'}">${cat.neg?'-':''}${eur(val,0)}</div>
+        ${e.amount&&e.crypto_symbol?`<div class="pos-sub">${e.amount} ${e.crypto_symbol.toUpperCase()}</div>`:''}
+        ${e.rate_pa?`<div style="font-family:monospace;font-size:10px;color:#22c55e;margin-top:1px">${e.rate_pa}% p.a.</div>`:''}
+        ${e.ytd?`<div style="font-family:monospace;font-size:10px;color:${parseFloat(e.ytd)>=0?'#22c55e':'#ef4444'};margin-top:1px">${pct(parseFloat(e.ytd))} YTD</div>`:''}
+      </div>
+    </div>
+    ${chips?`<div style="margin-bottom:8px">${chips}</div>`:''}
+    ${gain?`<div style="display:flex;gap:16px;padding:8px 10px;background:${gain.abs>=0?'rgba(34,197,94,.07)':'rgba(239,68,68,.07)'};border-radius:6px;margin-bottom:${e.note?'8px':'0'}">
+      <div><div style="font-family:monospace;font-size:8px;color:var(--textd);margin-bottom:1px">BUCHGEWINN</div><div style="font-family:monospace;font-size:12px;color:${gain.abs>=0?'#22c55e':'#ef4444'}">${gain.abs>=0?'+':''}${eur(gain.abs,0)}</div></div>
+      <div><div style="font-family:monospace;font-size:8px;color:var(--textd);margin-bottom:1px">IN %</div><div style="font-family:monospace;font-size:12px;color:${gain.abs>=0?'#22c55e':'#ef4444'}">${pct(gain.p)}</div></div>
+    </div>`:''}
+    ${dLeft!==null&&dLeft<90?`<div style="font-family:monospace;font-size:10px;color:#f59e0b;padding:5px 8px;background:rgba(245,158,11,.1);border-radius:5px;margin-bottom:${e.note?'8px':'0'}">⚠ Fällig in ${dLeft} Tagen</div>`:''}
+    ${e.note?`<div style="font-size:11px;color:var(--textm);line-height:1.5;padding:7px 10px;background:rgba(74,85,104,.12);border-radius:6px;border-left:2px solid var(--borderl)">${e.note}</div>`:''}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+      <span style="font-family:monospace;font-size:9px;color:var(--textd)">Stand: ${fmtDate(e.updated||e.last_updated)}</span>
+      <div style="display:flex;gap:6px">
+        <button onclick="openModal('${e.cat_id}','${e.id}')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:5px 12px;font-family:monospace;font-size:10px;color:var(--textm);min-height:36px;cursor:pointer">✎</button>
+        <button onclick="deletePos('${e.id}')" style="background:none;border:1px solid var(--redd);border-radius:5px;padding:5px 12px;font-family:monospace;font-size:10px;color:#ef4444;min-height:36px;cursor:pointer">✕</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+let collapsedCats={};
+function toggleCat(id){
+  collapsedCats[id]=!collapsedCats[id];
+  const el=document.getElementById('cat-'+id);
+  const arr=document.getElementById('arr-'+id);
+  if(el){ el.style.display=collapsedCats[id]?'none':'grid'; }
+  if(arr){ arr.textContent=collapsedCats[id]?'▶':'▼'; }
+}
+function filterPos(g){
+  posFilter=g; render();
+}
+function deletePos(id){
+  if(!confirm('Position löschen?'))return;
+  S.positions=S.positions.filter(e=>e.id!==id);
+  save(S); render();
+}
+
+/* ════════════════════════════════════════════════════
+   MODAL
+════════════════════════════════════════════════════ */
+let modalCatId=null, modalEntryId=null;
+function openModal(catId, entryId){
+  modalCatId=catId; modalEntryId=entryId;
+  const cat=CAT(catId);
+  const entry=entryId?S.positions.find(e=>e.id===entryId):null;
+
+  document.getElementById('m-icon').textContent=cat.icon;
+  document.getElementById('m-icon').style.background=`color-mix(in srgb,${cat.col} 15%,transparent)`;
+  document.getElementById('m-icon').style.border=`1px solid color-mix(in srgb,${cat.col} 40%,transparent)`;
+  document.getElementById('m-title').textContent=(entry?'Bearbeiten':'Neue Position')+' · '+cat.label;
+  document.getElementById('m-sub').textContent=cat.desc;
+
+  const isSP=entry?entry.sparplan===true:false;
+
+  let fieldsHtml='';
+  // Sparplan toggle for ETF & Krypto
+  if(['etf','krypto'].includes(catId)){
+    fieldsHtml+=`<div style="margin-bottom:14px"><div class="fld-label">Sparplan aktiv?</div>
+      <div class="toggle-row" style="--cat-col:${cat.col}">
+        <button class="tgl${isSP?' on':''}" id="sp-ja" onclick="toggleSP(true)">Ja</button>
+        <button class="tgl${!isSP?' on':''}" id="sp-nein" onclick="toggleSP(false)">Nein</button>
+      </div></div>`;
+  }
+
+  // ISIN hint
+  if(cat.isin&&entry?.isin&&entry.isin.length===12){
+    fieldsHtml+=`<div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:monospace;font-size:11px;color:#60a5fa">ISIN: ${entry.isin}</span>
+      <a href="https://www.onvista.de/suche/?searchValue=${entry.isin}" target="_blank" style="font-family:monospace;font-size:10px;color:#60a5fa;padding:4px 10px;background:rgba(96,165,250,.15);border-radius:4px">→ Onvista ↗</a>
+    </div>`;
+  }
+  if(cat.crypto&&entry?.crypto_symbol){
+    fieldsHtml+=`<div style="background:rgba(247,147,26,.08);border:1px solid rgba(247,147,26,.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:monospace;font-size:11px;color:#f7931a">₿ ${entry.crypto_symbol.toUpperCase()}${entry.crypto_name?' · '+entry.crypto_name:''}</span>
+      <a href="https://www.coingecko.com/de/munze/${(entry.crypto_name||'bitcoin').toLowerCase().replace(/ /g,'-')}" target="_blank" style="font-family:monospace;font-size:10px;color:#f7931a;padding:4px 10px;background:rgba(247,147,26,.15);border-radius:4px">→ CoinGecko ↗</a>
+    </div>`;
+  }
+
+  fieldsHtml+='<div class="field-grid" id="modal-fields">';
+  cat.fields.filter(f=>f!=='sparplan').forEach(f=>{
+    const m=FMETA[f]; if(!m)return;
+    const wide=f==='note'||f==='name'||f==='isin'||f==='strategy'||f==='crypto_name'||f==='wallet_label';
+    const hide=(catId==='etf'||catId==='krypto')&&f==='sparrate'&&!isSP;
+    const val=entry?.[f]??'';
+    let inp='';
+    if(m.t==='select'){
+      inp=`<select class="inp" id="f-${f}"><option value="">— wählen —</option>${(m.opts||[]).map(o=>`<option${val===o?' selected':''}>${o}</option>`).join('')}</select>`;
+    } else if(m.t==='textarea'){
+      inp=`<textarea class="inp" id="f-${f}" rows="2" placeholder="${m.ph||''}">${val}</textarea>`;
+
+```
+} else {
+  inp=`<input class="inp" id="f-${f}" type="${m.t==='number'?'text':m.t}" value="${val}" placeholder="${m.ph||''}"${m.max?' maxlength="'+m.max+'"':''}/>`;
+}
+fieldsHtml+=`<div class="${wide?'fw':''}${hide?' hide-sp':''}"><div class="fld-label">${m.lbl}</div>${inp}</div>`;
+```
+
+});
+fieldsHtml+=’</div>’;
+
+// Buchgewinn preview placeholder
+fieldsHtml+=`<div id="gain-preview"></div>`;
+
+fieldsHtml+=`<div style="display:flex;gap:10px;margin-top:22px">
+<button class="btn btn-green" style="flex:1" onclick="saveEntry()">
+${entry?‘Änderungen speichern’:‘Position hinzufügen’}
+</button>
+<button class="btn btn-outline" onclick="closeModal()">Abbrechen</button>
+
+  </div>`;
+
+document.getElementById(‘m-body’).innerHTML=fieldsHtml;
+document.getElementById(‘overlay’).classList.add(‘show’);
+
+// Attach live gain calc
+[‘value’,‘shares’,‘buy_price_avg’,‘amount’].forEach(fid=>{
+const el=document.getElementById(‘f-’+fid);
+if(el) el.addEventListener(‘input’,updateGainPreview);
+});
+updateGainPreview();
+}
+
+function toggleSP(val){
+document.getElementById(‘sp-ja’).classList.toggle(‘on’,val);
+document.getElementById(‘sp-nein’).classList.toggle(‘on’,!val);
+document.querySelectorAll(’.hide-sp’).forEach(el=>el.style.display=val?’’:‘none’);
+}
+
+function updateGainPreview(){
+const cat=CAT(modalCatId);
+const valEl=document.getElementById(‘f-value’);
+const sharesEl=document.getElementById(‘f-shares’);
+const buyEl=document.getElementById(‘f-buy_price_avg’);
+const amtEl=document.getElementById(‘f-amount’);
+if(!valEl||!buyEl)return;
+const val=parseFloat(valEl.value)||0;
+const cost=[‘etf’,‘aktien’].includes(cat.id)
+?(parseFloat(sharesEl?.value||0))*(parseFloat(buyEl.value)||0)
+:cat.id===‘krypto’?(parseFloat(amtEl?.value||0))*(parseFloat(buyEl.value)||0):0;
+const el=document.getElementById(‘gain-preview’);
+if(!el)return;
+if(!cost||!val){el.innerHTML=’’;return;}
+const abs=val-cost,p=((val-cost)/cost)*100;
+const col=abs>=0?’#22c55e’:’#ef4444’;
+el.innerHTML=`<div style="display:flex;gap:20px;padding:10px 14px;background:${abs>=0?'rgba(34,197,94,.07)':'rgba(239,68,68,.07)'};border:1px solid ${abs>=0?'#14532d':'#7f1d1d'};border-radius:8px;margin-top:14px">
+<div><div style="font-family:monospace;font-size:8px;color:var(--textd)">BUCHGEWINN</div><div style="font-family:monospace;font-size:16px;color:${col};font-weight:500">${abs>=0?’+’:’’}${eur(abs,0)}</div></div>
+<div><div style="font-family:monospace;font-size:8px;color:var(--textd)">IN %</div><div style="font-family:monospace;font-size:16px;color:${col};font-weight:500">${pct(p)}</div></div>
+
+  </div>`;
+}
+
+function saveEntry(){
+const cat=CAT(modalCatId);
+const entry={id:modalEntryId||uid(),cat_id:modalCatId,updated:today()};
+cat.fields.forEach(f=>{
+if(f===‘sparplan’){
+entry.sparplan=document.getElementById(‘sp-ja’)?.classList.contains(‘on’)||false;
+} else {
+const el=document.getElementById(‘f-’+f);
+if(el) entry[f]=el.value;
+}
+});
+if(modalEntryId){
+S.positions=S.positions.map(e=>e.id===modalEntryId?entry:e);
+} else {
+S.positions.push(entry);
+}
+S.updated=today();
+save(S); closeModal(); render();
+}
+function closeModal(){
+document.getElementById(‘overlay’).classList.remove(‘show’);
+}
+document.getElementById(‘overlay’).addEventListener(‘click’,e=>{
+if(e.target===document.getElementById(‘overlay’)) closeModal();
+});
+
+/* ════════════════════════════════════════════════════
+ANALYSE
+════════════════════════════════════════════════════ */
+function renderAnalyse(){
+return `<div style="max-width:780px"> <div style="font-family:monospace;font-size:10px;color:var(--textm);margin-bottom:16px">Claude analysiert deine aktuellen Positionsdaten — setzt eine Internetverbindung voraus.</div> <div class="g3" style="margin-bottom:20px"> ${[ {id:'daily',  lbl:'📬 Täglicher Alert',      desc:'Kurze Stichpunkte — was heute wichtig ist'}, {id:'weekly', lbl:'📋 Wöchentlicher Check-in',desc:'Bericht wie vom Berater — ~5 min lesen'}, {id:'monthly',lbl:'📊 Monatsbericht',         desc:'Vollständige Analyse mit Empfehlungen'}, ].map(m=>`<button onclick="runAI('${m.id}')" style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:left;cursor:pointer;min-height:90px;">
+<div style="font-size:13px;font-weight:600;margin-bottom:5px">${m.lbl}</div>
+<div style="font-family:monospace;font-size:10px;color:var(--textm)">${m.desc}</div>
+</button>`).join(’’)}
+</div>
+<div id="ai-out"></div>
+
+  </div>`;
+}
+
+async function runAI(mode){
+const el=document.getElementById(‘ai-out’);
+if(!el)return;
+el.innerHTML=`<div class="p" style="text-align:center;padding:40px"> <div style="font-family:monospace;font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:.1em">ANALYSIERE PORTFOLIO...</div> <div style="display:flex;justify-content:center;gap:6px"> ${[0,1,2].map(i=>`<div class="dot" style="animation-delay:${i*.4}s"></div>`).join(’’)}
+</div>
+
+  </div>`;
+  const m=metrics();
+  const summary={
+    nettovermoegen:eur(m.net),ytd:pct(m.ytdPct),
+    liquiditaet:eur(m.liq),sparraten:eur(m.sparraten),
+    cashflow:eur(m.netCF),
+    positionen:S.positions.map(e=>{const c=CAT(e.cat_id);return{name:e.crypto_name||e.name||e.bank||e.provider||c.label,klasse:c.label,wert:eur(parseFloat(e.value||e.outstanding||0)),ytd:e.ytd?pct(parseFloat(e.ytd)):null};}),
+  };
+  const prompts={
+    daily:`Du bist ein persönlicher Wealth-Manager. Erstelle auf Deutsch einen täglichen Alert-Digest (max 150 Wörter, 3-5 Stichpunkte). Ton: professionell, direkt. Portfolio:\n${JSON.stringify(summary,null,2)}`,
+    weekly:`Du bist ein Portfolio-Manager. Erstelle auf Deutsch einen wöchentlichen Check-in (ca. 200 Wörter). Struktur: 1) Lage 2) Positives 3) Prüfen 4) Diese Woche. Ton: wie Brief vom Berater. Portfolio:\n${JSON.stringify(summary,null,2)}`,
+    monthly:`Du bist ein Family-Office-Analytiker. Erstelle auf Deutsch den Monatsbericht (ca. 280 Wörter). Struktur: Executive Summary · Performance · Risiken · Empfehlungen · Ausblick. Portfolio:\n${JSON.stringify(summary,null,2)}`,
+  };
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompts[mode]}]})});
+    const data=await res.json();
+    const txt=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||'Keine Antwort.';
+    el.innerHTML=`<div class="p">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+        <div style="width:30px;height:30px;border-radius:6px;background:rgba(34,197,94,.15);border:1px solid #14532d;display:flex;align-items:center;justify-content:center;font-size:14px">◈</div>
+        <div>
+          <div style="font-family:monospace;font-size:9px;color:var(--textd);letter-spacing:.1em">CLAUDE PORTFOLIO INTELLIGENCE</div>
+          <div style="font-size:12px;color:var(--textm)">${{daily:'Täglicher Alert',weekly:'Wöchentlicher Check-in',monthly:'Monatsbericht'}[mode]}</div>
+        </div>
+        <button onclick="navigator.clipboard?.writeText(document.getElementById('ai-text').textContent)" style="margin-left:auto;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:monospace;font-size:10px;color:var(--textm);cursor:pointer;min-height:36px">📋 Kopieren</button>
+      </div>
+      <div id="ai-text" style="font-family:monospace;font-size:12px;color:var(--textm);line-height:1.9;white-space:pre-wrap">${txt}</div>
+    </div>`;
+  } catch(e){
+    el.innerHTML=`<div class="p"><div style="color:#ef4444;font-family:monospace;font-size:12px">Fehler: ${e.message}</div></div>`;
+  }
+}
+
+/* ════════════════════════════════════════════════════
+SZENARIEN
+════════════════════════════════════════════════════ */
+function renderSzenarien(){
+const p=S.positions;
+const byLabel={};
+p.forEach(e=>{const c=CAT(e.cat_id);if(!c||c.neg)return;byLabel[c.label]=(byLabel[c.label]||0)+pv(e);});
+const total=Object.values(byLabel).reduce((s,v)=>s+v,0);
+const scenarios=[
+{t:‘🔻 Aktiencrash –30%’,d:‘Wie 2020, 2008 oder 2022’,i:{‘ETF / Fonds’:-.30,‘Aktien Einzeltitel’:-.35,‘Robo-Advisory’:-.25,‘Krypto’:-.50,‘Festgeld’:.05,‘Tagesgeld’:.01,‘Girokonto’:0}},
+{t:‘💵 USD +15% (EUR schwächer)’,d:‘Starker Dollar, schwacher Euro’,i:{‘ETF / Fonds’:-.08,‘Aktien Einzeltitel’:-.12,‘Robo-Advisory’:-.06,‘Krypto’:-.10,‘Festgeld’:0,‘Tagesgeld’:0,‘Girokonto’:0}},
+{t:‘📈 Zinswende +200bp’,d:‘EZB erhöht auf 4,25%’,i:{‘ETF / Fonds’:-.12,‘Aktien Einzeltitel’:-.15,‘Robo-Advisory’:-.10,‘Krypto’:-.25,‘Festgeld’:.04,‘Tagesgeld’:.03,‘Girokonto’:.01}},
+{t:‘🌐 Rezession 2026/27’,d:‘GDP –2%, Risikoaversion hoch’,i:{‘ETF / Fonds’:-.22,‘Aktien Einzeltitel’:-.28,‘Robo-Advisory’:-.18,‘Krypto’:-.45,‘Festgeld’:.08,‘Tagesgeld’:.01,‘Girokonto’:0}},
+];
+return `<div class="g2"> ${scenarios.map(s=>{ const loss=Object.entries(s.i).reduce((sum,[lbl,chg])=>sum+(byLabel[lbl]||0)*chg,0); const lp=total>0?(loss/total)*100:0; return `<div class="p">
+<div style="font-size:14px;font-weight:600;margin-bottom:3px">${s.t}</div>
+<div style="font-family:monospace;font-size:10px;color:var(--textm);margin-bottom:14px">${s.d}</div>
+<div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap">
+<div><div style="font-family:monospace;font-size:9px;color:var(--textd);margin-bottom:2px">PORTFOLIO-EFFEKT</div><div style="font-family:monospace;font-size:20px;color:${loss<0?'#ef4444':'#22c55e'};font-weight:500">${loss<0?’-’:’+’}${eur(Math.abs(loss),0)}</div></div>
+<div><div style="font-family:monospace;font-size:9px;color:var(--textd);margin-bottom:2px">IN %</div><div style="font-family:monospace;font-size:20px;color:${lp<0?'#ef4444':'#22c55e'};font-weight:500">${num(lp)}%</div></div>
+<div><div style="font-family:monospace;font-size:9px;color:var(--textd);margin-bottom:2px">VERBLEIBEND</div><div style="font-family:monospace;font-size:20px;font-weight:500">${eur(total+loss,0)}</div></div>
+</div>
+${Object.entries(s.i).filter(([lbl])=>(byLabel[lbl]||0)>0).map(([lbl,chg])=>` <div style="display:flex;justify-content:space-between;margin-bottom:4px"> <span style="font-family:monospace;font-size:10px;color:var(--textm)">${lbl}</span> <span style="font-family:monospace;font-size:10px;color:${chg<0?'#ef4444':chg>0?'#22c55e':'var(--textd)'}">${chg>=0?'+':''}${(chg*100).toFixed(0)}% = ${eur((byLabel[lbl]||0)*chg,0)}</span> </div>`).join(’’)}
+</div>`;
+}).join(’’)}
+
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════
+PLANUNG
+════════════════════════════════════════════════════ */
+function renderPlanung(){
+const goals=S.goals;
+const sparraten=S.positions.filter(e=>e.sparrate).reduce((s,e)=>s+parseFloat(e.sparrate||0),0);
+return `<div style="max-width:800px;display:flex;flex-direction:column;gap:14px"> <!-- Ziele --> <div class="p"> <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"> <div class="label" style="margin-bottom:0">Sparziele</div> <button class="btn btn-green btn-sm" onclick="openGoalForm()">+ Ziel</button> </div> <div id="goal-form" style="display:none;background:var(--panel2);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:16px;margin-bottom:16px"> <div class="field-grid"> <div class="fw"><div class="fld-label">Zielname</div><input class="inp" id="g-name" placeholder="z.B. Notgroschen 6 Monate"/></div> <div><div class="fld-label">Zielbetrag (€)</div><input class="inp" id="g-target" placeholder="z.B. 15000"/></div> <div><div class="fld-label">Aktueller Stand (€)</div><input class="inp" id="g-current" placeholder="z.B. 8000"/></div> <div><div class="fld-label">Zieldatum</div><input class="inp" type="date" id="g-deadline"/></div> <div class="fw" style="display:flex;gap:8px"> <button class="btn btn-green" style="flex:1" onclick="saveGoal()">Speichern</button> <button class="btn btn-outline" onclick="document.getElementById('goal-form').style.display='none'">Abbrechen</button> </div> </div> </div> ${goals.length===0?`<div style="font-family:monospace;font-size:10px;color:var(--textd)">Noch keine Ziele — füge dein erstes Sparziel hinzu.</div>`:''} ${goals.map(g=>{ const pr=Math.min((g.current/g.target)*100,100)||0; const dl=daysUntil(g.deadline); return `<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+<div style="display:flex;justify-content:space-between;margin-bottom:6px">
+<div style="font-size:13px;font-weight:500">${g.name}</div>
+<div style="display:flex;align-items:center;gap:8px">
+${g.deadline?`<div style="font-family:monospace;font-size:10px;color:var(--textm)">bis ${fmtDate(g.deadline)}</div>`:’’}
+<button onclick="deleteGoal('${g.id}')" style="background:none;border:none;color:var(--textd);font-size:16px;cursor:pointer;min-height:36px;min-width:36px">×</button>
+</div>
+</div>
+${progBar(g.current,g.target,’#14b8a6’,true)}
+<div style="display:flex;justify-content:space-between;margin-top:4px">
+<span style="font-family:monospace;font-size:10px;color:var(--textm)">${eur(g.current,0)} von ${eur(g.target,0)}</span>
+<span style="font-family:monospace;font-size:10px;color:#22c55e">${num(pr,0)}%</span>
+</div>
+</div>`; }).join('')} </div> <!-- Sparpläne --> <div class="p"> <div class="label">Sparplan-Übersicht</div> ${S.positions.filter(e=>e.sparrate).map(e=>{ const cat=CAT(e.cat_id); return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+<div>
+<div style="font-size:12px;font-weight:500">${e.crypto_name||e.name||e.provider||cat.label}</div>
+<div style="font-family:monospace;font-size:10px;color:var(--textm)">${cat.label} · Wert: ${eur(pv(e),0)}</div>
+</div>
+<div style="text-align:right"><div style="font-family:monospace;font-size:14px;color:#22c55e;font-weight:500">${eur(parseFloat(e.sparrate),0)}</div><div style="font-family:monospace;font-size:9px;color:var(--textd)">/ Monat</div></div>
+</div>`; }).join('')} ${S.positions.filter(e=>e.sparrate).length===0?`<div style="font-family:monospace;font-size:10px;color:var(--textd)">Keine Sparpläne erfasst</div>`:''} ${sparraten>0?`<div style="display:flex;justify-content:space-between;padding-top:12px"><span style="font-size:12px;font-weight:600">Gesamt monatlich</span><span style="font-family:monospace;font-size:14px;color:#d4a843;font-weight:500">${eur(sparraten,0)}</span></div>`:’’}
+</div>
+
+  </div>`;
+}
+function openGoalForm(){ document.getElementById('goal-form').style.display='block'; }
+function saveGoal(){
+  const name=document.getElementById('g-name').value;
+  if(!name)return;
+  S.goals.push({id:uid(),name,target:parseFloat(document.getElementById('g-target').value)||0,current:parseFloat(document.getElementById('g-current').value)||0,deadline:document.getElementById('g-deadline').value});
+  save(S); render();
+}
+function deleteGoal(id){ if(confirm('Ziel löschen?')){ S.goals=S.goals.filter(g=>g.id!==id); save(S); render(); } }
+
+/* ════════════════════════════════════════════════════
+WATCHLIST
+════════════════════════════════════════════════════ */
+function renderWatchlist(){
+return `<div style="max-width:680px"> <div class="p"> <div class="label">Watchlist</div> ${S.watchlist.map(w=>`
+<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+<div>
+<div style="font-size:13px;font-weight:500">${w.name}</div>
+${w.note?`<div style="font-family:monospace;font-size:10px;color:var(--textm);margin-top:2px">${w.note}</div>`:’’}
+</div>
+<button onclick="deleteWatch('${w.id}')" style="background:none;border:none;color:var(--textd);font-size:18px;cursor:pointer;min-height:44px;min-width:44px;padding:0">×</button>
+</div>`).join('')} ${S.watchlist.length===0?`<div style="font-family:monospace;font-size:10px;color:var(--textd);margin-bottom:12px">Noch keine Einträge.</div>`:’’}
+<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+<input class="inp" id="w-name" placeholder="Name / Ticker / ISIN…" style="flex:1;min-width:140px"/>
+<input class="inp" id="w-note" placeholder="Notiz / Einstiegspunkt…" style="flex:2;min-width:160px"/>
+<button class="btn btn-green" onclick="addWatch()" style="flex-shrink:0">+ Hinzufügen</button>
+</div>
+</div>
+
+  </div>`;
+}
+function addWatch(){
+  const name=document.getElementById('w-name').value; if(!name)return;
+  S.watchlist.push({id:uid(),name,note:document.getElementById('w-note').value});
+  save(S); render();
+}
+function deleteWatch(id){ S.watchlist=S.watchlist.filter(w=>w.id!==id); save(S); render(); }
+
+/* ════════════════════════════════════════════════════
+EINSTELLUNGEN
+════════════════════════════════════════════════════ */
+function renderEinstellungen(){
+const cf=S.cashflow;
+return `<div style="max-width:620px;display:flex;flex-direction:column;gap:14px">
+<!-- Cashflow -->
+<div class="p">
+<div class="label">Monatlicher Cashflow</div>
+<div class="field-grid">
+<div><div class="fld-label">Monatliche Einnahmen (€)</div><input class="inp" id="cf-inc" value="${cf.inc||0}"/></div>
+<div><div class="fld-label">Monatliche Ausgaben (€)</div><input class="inp" id="cf-exp" value="${cf.exp||0}"/></div>
+</div>
+<button class="btn btn-green btn-sm" style="margin-top:12px" onclick="saveCF()">Speichern</button>
+</div>
+<!-- E-Mail -->
+<div class="p">
+<div class="label">E-Mail für KI-Berichte</div>
+<div style="display:flex;gap:8px">
+<input class="inp" id="cf-email" value="${S.email||''}" placeholder="deine@email.de" style="flex:1"/>
+<button class="btn btn-green" onclick="saveEmail()">Speichern</button>
+</div>
+<div style="font-family:monospace;font-size:10px;color:var(--textd);margin-top:8px;line-height:1.7">📬 Täglich · 📋 Wöchentlich · 📊 Monatlich — über Tab „Analyse” generieren & kopieren</div>
+</div>
+<!-- Datensicherung -->
+<div class="p">
+<div class="label">Datensicherung</div>
+<div style="font-family:monospace;font-size:11px;color:var(--textm);line-height:1.8;margin-bottom:14px">
+✓ Alle Daten lokal in Safari gespeichert (localStorage)<br>
+✓ Kein Server · Kein Upload · Datenschutzfreundlich<br>
+✓ Als PWA am Home-Bildschirm speicherbar (Teilen → Zum Home-Bildschirm)
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button class="btn btn-outline" onclick="exportData()">⬇ JSON Export</button>
+<button class="btn btn-outline" onclick="importData()">⬆ JSON Import</button>
+<button onclick="if(confirm('Alle Daten löschen?')){localStorage.removeItem('${STORE}');location.reload();}" style="background:none;border:1px solid var(--redd);border-radius:8px;padding:8px 16px;color:#ef4444;font-size:13px;cursor:pointer;min-height:40px">⚠ Zurücksetzen</button>
+</div>
+</div>
+<!-- PWA Anleitung -->
+<div class="p" style="border-color:rgba(34,197,94,.3)">
+<div class="label" style="color:#22c55e">📲 Als App am Home-Bildschirm speichern</div>
+<div style="font-size:13px;line-height:1.8;color:var(--textm)">
+1. Öffne diese Seite in <strong style="color:var(--text)">Safari</strong> auf deinem iPad<br>
+2. Tippe auf das <strong style="color:var(--text)">Teilen-Symbol ↑</strong> in der Toolbar<br>
+3. Wähle <strong style="color:var(--text)">„Zum Home-Bildschirm”</strong><br>
+4. Das Dashboard startet ab jetzt wie eine native App — ohne Browser-Leiste, im Vollbild
+</div>
+</div>
+
+  </div>`;
+}
+function saveCF(){
+  S.cashflow={inc:parseFloat(document.getElementById('cf-inc').value)||0,exp:parseFloat(document.getElementById('cf-exp').value)||0};
+  save(S); alert('Cashflow gespeichert.');
+}
+function saveEmail(){
+  S.email=document.getElementById('cf-email').value; save(S); alert('E-Mail gespeichert.');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`vermoegen-${today()}.json`; a.click();
+}
+function importData(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0]; if(!file)return;
+    const r=new FileReader();
+    r.onload=ev=>{try{S=JSON.parse(ev.target.result);save(S);render();alert('Import erfolgreich!');}catch{alert('Fehler beim Import.');}};
+    r.readAsText(file);
+  }; inp.click();
+}
+
+/* ════════════════════════════════════════════════════
+BIND EVENTS (after render)
+════════════════════════════════════════════════════ */
+function bindEvents(){
+// nothing extra needed — all handlers are inline onclick
+}
+
+/* ════════════════════════════════════════════════════
+CLOCK & INIT
+════════════════════════════════════════════════════ */
+function updateClock(){
+const el=document.getElementById(‘navtime’);
+if(el){
+const now=new Date();
+el.innerHTML=now.toLocaleDateString(‘de-DE’,{day:‘2-digit’,month:‘2-digit’,year:‘numeric’})+’<br>’+now.toLocaleTimeString(‘de-DE’,{hour:‘2-digit’,minute:‘2-digit’});
+}
+}
+setInterval(updateClock,30000); updateClock();
+
+// Install banner
+if(!localStorage.getItem(‘install_dismissed’)&&!navigator.standalone){
+setTimeout(()=>document.getElementById(‘install-banner’).classList.add(‘show’),3000);
+}
+
+// Init
+render();
+</script>
+
+<!-- Service Worker for offline / PWA -->
+
+<script>
+if('serviceWorker' in navigator){
+  const SW=`
+const CACHE='vd-v1';
+const FILES=['/'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES))));
+self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));
+`;
+  const blob=new Blob([SW],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+</script>
+
+</body>
+</html>
